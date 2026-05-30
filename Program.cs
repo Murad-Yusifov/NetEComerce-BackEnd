@@ -22,8 +22,8 @@ builder.Services.AddControllers()
 // db connetction
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseSqlite(
-    builder.Configuration.GetConnectionString("DefaultConnection")
+options.UseNpgsql(
+builder.Configuration.GetConnectionString("Postgres")
  )
 );
 
@@ -53,6 +53,8 @@ builder.Services
                     )
             };
     });
+
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 

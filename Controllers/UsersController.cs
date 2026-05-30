@@ -1,10 +1,12 @@
+using Backend.DTOs;
 using Backend.Models;
 using Backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Controllers;
-[Authorize(Roles ="Admin")]
+
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -23,7 +25,15 @@ public class UsersController : ControllerBase
     {
         var users = await _userService.GetAll();
 
-        return Ok(users);
+        var result = users.Select(p => new UserDto
+        {
+            Id = p.Id,
+            Username = p.Username,
+            Email = p.Email,
+            Role = p.Role,
+        });
+
+        return Ok(result);
     }
 
     // GET: api/users/1
@@ -36,25 +46,25 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound();
 
-        return Ok(user);
+        var result = new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role,
+        };
+        return Ok(result);
     }
 
     // POST: api/users
 
-    [HttpPost]
-    public async Task<IActionResult> Add(User user)
-    {
-        await _userService.Add(user);
-
-        return Ok(user);
-    }
 
     // PUT: api/users/1
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(
         int id,
-        User updatedUser
+        UpdateUserDto dto
     )
     {
         var user = await _userService.GetById(id);
@@ -62,9 +72,19 @@ public class UsersController : ControllerBase
         if (user == null)
             return NotFound();
 
-        await _userService.Update(id, updatedUser);
+        user.Username = dto.Username;
+        user.Email = dto.Email;
+        user.Role = dto.Role;
 
-        return Ok(updatedUser);
+        await _userService.Update(id, user);
+
+        return Ok(new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role
+        });
     }
 
     // DELETE: api/users/1
@@ -81,4 +101,35 @@ public class UsersController : ControllerBase
 
         return Ok("User deleted");
     }
+
+
+
+
+    
+    // [HttpPost]
+    // public async Task<IActionResult> Add(CreateUserDto dto)
+    // {
+    //     var user = new User
+    //     {
+    //         Username = dto.Username,
+    //         Email = dto.Email,
+    //         PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+    //         Role = dto.Role,
+    //     };
+
+    //     await _userService.Add(user);
+
+
+    //     var result = new UserDto
+    //     {
+    //         Id = user.Id,
+    //         Username = user.Username,
+    //         Email = user.Email,
+    //         Role = user.Role,
+
+    //     };
+
+    //     return Ok(result);
+
+    // }
 }

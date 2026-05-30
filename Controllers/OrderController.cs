@@ -14,7 +14,7 @@ public class OrdersController : ControllerBase
         _orderService = orderService;
     }
 
-    [Authorize]
+[Authorize]
     [HttpPost("{userId}")]
     public async Task<IActionResult> CreateOrder(int userId)
     {

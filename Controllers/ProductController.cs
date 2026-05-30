@@ -1,3 +1,4 @@
+using Backend.DTOs;
 using Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,16 @@ public class ProductsController : ControllerBase
     {
         var products = await _productService.GetAll();
 
-        return Ok(products);
+        var result = products.Select(p => new ProductDto
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Description = p.Description,
+            Price = p.Price,
+            Brand = p.Brand,
+            CategoryId = p.CategoryId
+        });
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
@@ -31,16 +41,45 @@ public class ProductsController : ControllerBase
         if (product == null)
             return NotFound();
 
-        return Ok(product);
+        var result = new ProductDto
+        {
+            Id = product.Id,
+            Title = product.Title,
+            Description = product.Description,
+            Price = product.Price,
+            Brand = product.Brand,
+            CategoryId = product.CategoryId
+        };
+
+        return Ok(result);
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Add(Product product)
+    public async Task<IActionResult> Add(CreateProductDto dto)
     {
+        var product = new Product
+        {
+            Title = dto.Title,
+            Description = dto.Description,
+            Price = dto.Price,
+            Brand = dto.Brand,
+            CategoryId = dto.CategoryId
+        };
+
         await _productService.Add(product);
 
-        return Ok(product);
+        var result = new ProductDto
+        {
+            Id = product.Id,
+            Title = product.Title,
+            Description = product.Description,
+            Price = product.Price,
+            Brand = product.Brand,
+            CategoryId = product.CategoryId
+        };
+
+        return Ok(result);
     }
 
     [HttpDelete("{id}")]
@@ -61,7 +100,7 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(
     int id,
-    Product updatedProduct
+    UpdateProductDto dto
 )
     {
         var product = await _productService.GetById(id);
@@ -69,8 +108,24 @@ public class ProductsController : ControllerBase
         if (product == null)
             return NotFound();
 
-        await _productService.Update(id, updatedProduct);
+        product.Title = dto.Title;
+        product.Description = dto.Description;
+        product.Price = dto.Price;
+        product.Brand = dto.Brand;
+        product.CategoryId = dto.CategoryId;
 
-        return Ok(updatedProduct);
+        await _productService.Update(id, product);
+
+        var result = new ProductDto
+        {
+            Id = product.Id,
+            Title = product.Title,
+            Description = product.Description,
+            Price = product.Price,
+            Brand = product.Brand,
+            CategoryId = product.CategoryId
+        };
+
+        return Ok(result);
     }
 }

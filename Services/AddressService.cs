@@ -12,7 +12,7 @@ public class AddressService : IAddressService
 
     public async Task<List<Address>> GetAll()
     {
-        return await _context.Addresses.Include(x=>x.User).ToListAsync();
+        return await _context.Addresses.ToListAsync();
     }
 
     public async Task Add(Address address)

@@ -14,34 +14,25 @@ namespace Backend.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
-
-    private readonly IConfiguration _configuration;
+    private readonly IAuthService _authService;
 
     public AuthController(
         AppDbContext context,
-        IConfiguration configuration
+        IAuthService authService
     )
     {
         _context = context;
-
-        _configuration = configuration;
+        _authService = authService;
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register(
-        RegisterDto dto
-    )
+    public async Task<IActionResult> Register(RegisterDto dto)
     {
         var user = new User
         {
             Username = dto.Username,
             Email = dto.Email,
-
-            PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword(
-                    dto.Password
-                ),
-
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             Role = "Customer"
         };
 
@@ -49,7 +40,12 @@ public class AuthController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(user);
+        var jwt = _authService.GenerateToken(user);
+
+        return Ok(new
+        {
+            token = jwt
+        });
     }
 
     [HttpPost("login")]
@@ -73,52 +69,7 @@ public class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var claims = new[]
-        {
-            new Claim(
-                ClaimTypes.NameIdentifier,
-                user.Id.ToString()
-            ),
-
-            new Claim(
-                ClaimTypes.Email,
-                user.Email
-            ),
-
-            new Claim(
-                ClaimTypes.Role,
-                user.Role
-            )
-        };
-
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(
-                _configuration["Jwt:Key"]!
-            )
-        );
-
-        var creds = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256
-        );
-
-        var token = new JwtSecurityToken(
-            issuer:
-                _configuration["Jwt:Issuer"],
-
-            audience:
-                _configuration["Jwt:Audience"],
-
-            claims: claims,
-
-            expires:
-                DateTime.Now.AddDays(7),
-
-            signingCredentials: creds
-        );
-
-        var jwt = new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        var jwt = _authService.GenerateToken(user);
 
         return Ok(new { token = jwt });
     }

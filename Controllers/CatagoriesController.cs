@@ -28,6 +28,6 @@ public class CategoriesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        return Ok(await _context.Categories.ToListAsync());
+        return Ok(await _context.Categories.Include(u=>u.Products).ToListAsync());
     }
 }
